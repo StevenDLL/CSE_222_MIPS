@@ -4,7 +4,7 @@ menu:		.asciiz	"1. Binary to Hexadecimal and Decimal \n2. Hexadecimal to Binary 
 error:		.asciiz	"\nINVALID INPUT\n"
 binary:		.asciiz	"\nBinary Number: "
 hexadecimal:	.asciiz	"\nHexadecimal Number: "
-decimal:		.asciiz	"\nDecimal Number: "
+decimal:	.asciiz	"\nDecimal Number: "
 
 one:		.word	1
 two:		.word 	2
@@ -13,7 +13,7 @@ four:		.word	4
 
 buffer:		.space	10
 binary_num:	.space 	10
-hexadecimal_num:	.space	10
+hexadecimal_num:.space	10
 decimal_num:	.space	10
 
 	.text
