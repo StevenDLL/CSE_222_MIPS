@@ -1,286 +1,364 @@
 	.data
 
+#MESSAGES
+line_break:	.asciiz	"\n"
+explanation:	.asciiz	"Input a value between 1-4(each corresponds to an option on the menu below) \n"	
 menu:		.asciiz	"1. Binary to Hexadecimal and Decimal \n2. Hexadecimal to Binary and Decimal \n3. Decimal to Binary and Hexadecimal \n4. Exit\n"
 error:		.asciiz	"\nINVALID INPUT\n"
+
+get_message:	.asciiz	"Enter A Value...\n"
 binary:		.asciiz	"\nBinary Number: "
 hexadecimal:	.asciiz	"\nHexadecimal Number: "
 decimal:	.asciiz	"\nDecimal Number: "
 
+#VALUES
+buffer:		.space	32
 one:		.word	1
 two:		.word 	2
 three:		.word	3
 four:		.word	4
-
-buffer:		.space	10
-binary_num:	.space 	10
-hexadecimal_num:.space	10
-decimal_num:	.space	10
-
 	.text
-
-#Display Menu
-#Read Input
-#jump to correct method for said input.
-display_menu:
 	
-	#Display Menu
+display_menu:
+
+	#Display a new line break
+	la $a0, line_break
+	li $v0, 4
+	syscall
+
+	#Print explanation
+	la $a0, explanation
+	li $v0, 4
+	syscall
+	
+	#Print menu options
 	la $a0, menu
 	li $v0, 4
 	syscall
 	
-	#Read Input
+	#Read user-input
 	li $v0, 5
 	syscall
 	
-	#Move input
-	move $t0, $v0
+	#Save user-input
+	move $s0, $v0
 	
-	#Load Options Address
+	#Load options address
 	lw $t1, one
 	lw $t2, two
 	lw $t3, three
 	lw $t4, four
 	
-	beq $t0, $t1, from_binary
-	beq $t0, $t2, from_hexadecimal
-	beq $t0, $t3, from_decimal
-	beq $t0, $t4, exit
+	#Check user-input against possible options
+	beq $s0, $t1, from_binary
+	beq $s0, $t2, from_hexadecimal
+	beq $s0, $t3, from_decimal
+	beq $s0, $t4, exit
 	
+	#Display error message
 	li $v0, 4
 	la $a0, error
 	syscall
 	
 	j display_menu
-
-
-
-#Display give_input message
-#Take in input
-#Convert from binary to hexadecimal and decimal
-#Display Results
-#Exit back to menu
+	
 from_binary:
 
-	#Display Message
+	#Display entry message
+	la $a0, get_message
+	li $v0, 4
+	syscall
+	
+	#Display entry message
 	la $a0, binary
 	li $v0, 4
 	syscall
 	
-	#Read Input
-	li $v0, 8
-	#Set Address of input buffer
-	la $a0, buffer
-	#Set MAX Characters to read
-	li $a1, 30
-	syscall
-		
-	#Move value to a0
-	move $a0, $v0
+	#Get user-input and run main loop
+	jal get_user_input
+	jal loop_start
 	
-	#Make space in stack, save ra, then jump to verify
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	jal verify_binary
-	
-	#Make space in stack, save ra, then do conversions here
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	jal to_decimal
-	
-	#Print new values here
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	jal display_results
-	
-	#Exit back to menu
-	j display_menu
-
-
-
-#Move user input from a0 to a t0
-#Check that all values in said input are either 1's or 0's
-#If it meets all criteria then jump back to from_binary and continue
-#If it DOES'T meet all criteria then jump to invalid_input method, display message and then jump back to display_menu 
-verify_binary:
-	move $t0, $a0
-	
-	#Save original buffer string Address
-	la $s0, buffer
-	
-	#Set index
-	addi $s1, $zero, 0
-	
-
-verify_loop:
-
-	#Set t1 to address of buffer[i]
-	add $t1, $s0, $s1
-	
-	#Set t2 to the contents of buffer[i]
-	lbu $t2, 0($t1)
-	
-	#Increase index
-	addi $s1, $s1, 1
-	
-	#Check if content = [NULL]
-	beq $t2, $zero, exit
-	#Check if content = [LINE FEED]
-	beq $t2, 10, exit
-	
-	#Check if content = 0 or 1
-	blt $t2, '0', return_error
-	bgt $t2, '1', return_error
-	
-	j verify_loop
-
-return_error:
+	#Display Binary message
+	la $a0, binary
 	li $v0, 4
-	la $a0, error
 	syscall
-	j display_menu
 	
-binary_verify_finished:
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	jr $ra
+	#Display Binary value
+	li $v0, 35
+	move $a0, $t2
+	syscall
 	
-
-#Display give_input message
-#Take in input
-#Convert from hexadecimal to binary and decimal
-#Display Results
-#Exit back to menu
-from_hexadecimal:
-
-	#Display Message
+	#Display Hexadecimal message
 	la $a0, hexadecimal
 	li $v0, 4
 	syscall
 	
-	#Read Input
-	li $v0, 8
-	#Set Address of input buffer
-	la $a0, buffer
-	#Set MAX Characters to read
-	li $a1, 30
+	#Display Hexadecimal value
+	li $v0, 34
+	move $a0, $t2
 	syscall
 	
-	#Move value to t0(temporary register)
-	move $t0, $v0
-	
-	#Exit back to menu
-	j display_menu
-
-#Move user input from a0 to a t0
-#Check that all values in said input contains values from 0-9 & A-F
-#If it meets all criteria then jump back to from_hexadecimal and continue
-#If it DOES'T meet all criteria then jump to invalid_input method, display message and then jump back to display_menu 
-verify_hexadecimal:
-
-
-
-#Display give_input message
-#Take in input, 
-#Convert from decimal to hexadecimal and binary
-#Display Results
-#Exit back to menu
-from_decimal:
-
-	#Display Message
+	#Display Decimal message
 	la $a0, decimal
 	li $v0, 4
 	syscall
 	
-	#Read Input
-	li $v0, 8
-	#Set Address of input buffer
-	la $a0, buffer
-	#Set MAX Characters to read
-	li $a1, 30
+	#Display Decimal value
+	li $v0, 1
+	move $a0, $t2
 	syscall
 	
-	#Move value to t0(temporary register)
-	move $t0, $v0
+	#Display a new line break
+	la $a0, line_break
+	li $v0, 4
+	syscall
 	
-	#Exit back to menu
 	j display_menu
 
-
-
-#Move user input from a0 to a t0
-#Check that all values in said input are only numbers
-#If it meets all criteria then jump back to from_decimal and continue
-#If it DOES'T meet all criteria then jump to invalid_input method, display message and then jump back to display_menu 
-verify_decimal:
-
-
-
-to_binary:
-
-to_hexadecimal:
-
-to_decimal:	
-	la $s0, buffer
-	j to_decimal_loop
+from_hexadecimal:
+	#Display entry message
+	la $a0, get_message
+	li $v0, 4
+	syscall
 	
-to_decimal_loop:
-
-	#Check if s1 is 0, if it is then we looped and converted every value already
-	beq $s1, $zero, binary_verify_finished
+	#Display entry message
+	la $a0, hexadecimal
+	li $v0, 4
+	syscall
 	
-	#Set t1 to address of buffer[i]
-	add $t1, $s0, $s1
+	#Get user-input and run main loop
+	jal get_user_input
+	jal loop_start
 	
-	#Set t2 to the contents of buffer[i]
-	lbu $t2, 0($t1)
-	
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	beq $t2, '0', isZero
-	beq $t2, '1' isOne
-	
-	addi $s1, $zero, -1
-	
-	j to_decimal_loop
-	
-isZero:
-	mult $zero, $s1
-	mfhi $t3
-	
-	addi $t4, $t3, 0
-	
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	jr $ra
-	
-isOne:
-	mult $zero, $s1
-	mfhi $t3
-	
-	addi $t4, $t3, 0
-	
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	jr $ra
-
-display_results:
-
-	#Display Binary Message & Number
+	#Display Binary message
 	la $a0, binary
 	li $v0, 4
 	syscall
 	
-	la $a0, binary_num
+	#Display Binary value
+	li $v0, 35
+	move $a0, $t2
+	syscall
+	
+	#Display Hexadecimal message
+	la $a0, hexadecimal
+	li $v0, 4
+	syscall
+	
+	#Display Hexadecimal value
+	li $v0, 34
+	move $a0, $t2
+	syscall
+	
+	#Display Decimal message
+	la $a0, decimal
+	li $v0, 4
+	syscall
+	
+	#Display Decimal value
+	li $v0, 1
+	move $a0, $t2
+	syscall
+	
+	#Display a new line break
+	la $a0, line_break
 	li $v0, 4
 	syscall
 	
 	j display_menu
-	
 
-#Exit the application
+from_decimal:
+	#Display entry message
+	la $a0, get_message
+	li $v0, 4
+	syscall
+	
+	#Display entry message
+	la $a0, decimal
+	li $v0, 4
+	syscall
+	
+	#Get user-input and run main loop
+	jal get_user_input
+	jal loop_start
+	
+	#Display Binary message
+	la $a0, binary
+	li $v0, 4
+	syscall
+	
+	#Display Binary value
+	li $v0, 35
+	move $a0, $t2
+	syscall
+	
+	#Display Hexadecimal message
+	la $a0, hexadecimal
+	li $v0, 4
+	syscall
+	
+	#Display Hexadecimal value
+	li $v0, 34
+	move $a0, $t2
+	syscall
+	
+	#Display Decimal message
+	la $a0, decimal
+	li $v0, 4
+	syscall
+	
+	#Display Decimal value
+	li $v0, 1
+	move $a0, $t2
+	syscall
+	
+	#Display a new line break
+	la $a0, line_break
+	li $v0, 4
+	syscall
+	
+	j display_menu		
+						
+						
+get_user_input:
+
+	#Make space is stack and save ra
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	#Set max length of input then read user-input
+	li $v0, 8
+	la $a0, buffer
+	li $a1, 32
+	syscall
+	
+	#Get buffer address, setup temporary total variable, save value of a new line
+	la $t0, buffer
+	addi $t2, $0, 0
+	li $t3, 0x0A
+	
+	#Pop stack after loading register address
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+loop_start:
+
+	#Make space is stack and save ra
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+loop:
+	#Get buffer[i]
+	lbu $t1, 0($t0)
+	#Check place in string loop
+	beq $t1, $t3, loop_end
+	beq $t1, $0, loop_end
+	
+	#Check which criteria input meets
+	beq $s0, 1, verify_binary
+	beq $s0, 2, verify_hexadecimal
+	beq $s0, 3, verify_decimal
+	
+loop_middle:
+	#Get value of current character
+	add $t2, $t2, $t1
+	
+	#Increment index and continue loop
+	addi $t0, $t0, 1
+	j loop
+	
+loop_end:
+	#Save value found in stack into ra then pop and jump back
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+verify_binary:
+	#Check if current value is either 0 or 1
+	blt $t1, '0', invalid_input
+	bgt $t1, '1', invalid_input
+	
+	#Valid input so convert to binary representation by shifting
+	subi $t1, $t1, '0'
+	j do_binary_shift
+	
+verify_hexadecimal:
+	#Check if current value is between 0-9
+	check_hexadecimal_digit:
+	blt $t1, '0', invalid_input
+	bgt $t1, '9', check_upper_hexadecimal
+	subi $t1, $t1, '0'
+	j do_hexadecimal_shift
+	
+	#Check if current value is between a-f
+	check_lower_hexadecimal:
+	blt $t1, 'a', invalid_input
+	bgt $t1, 'f', invalid_input
+	subi $t1, $t1, 'a'
+	addi $t1, $t1, 10
+	j do_hexadecimal_shift
+	
+	#Check if current value is between A-F
+	check_upper_hexadecimal:
+	blt $t1, 'A', invalid_input
+	bgt $t1, 'F', check_lower_hexadecimal
+	subi $t1, $t1, 'A'
+	addi $t1, $t1, 10
+	j do_hexadecimal_shift
+
+
+
+verify_decimal:
+	#Check if current value is between 0-9
+	blt $t1, '0', invalid_input
+	bgt $t1, '9', invalid_input
+	
+	#Valid input so convert to decimal representation by shifting
+	subi $t1, $t1, '0'
+	j do_decimal_shift
+	
+	
+	
+invalid_input:
+	#Display error message
+	la $a0, error
+	li $v0, 4
+	syscall
+	
+	#Try to jump back to correct method/function
+	beq $s0, 1, from_binary
+	beq $s0, 2, from_hexadecimal
+	beq $s0, 3, from_decimal
+	
+	#If all else fails then just jump back to menu display(i.e restart the process)
+	j display_menu
+
+
+
+do_binary_shift:
+	#Shift left by 1 bit to get binary value
+	sll $t2, $t2, 1
+	j loop_middle
+	
+	
+	
+do_hexadecimal_shift:
+	#Shift left by 4 bits to get hexadecimal value
+	sll $t2, $t2, 4
+	j loop_middle
+	
+	
+	
+do_decimal_shift:
+	#Multiply left by 10 to get decimal value
+	mul $t2, $t2, 10
+	j loop_middle
+
+
+
+
 exit:
+	#Exit the application
 	li $v0, 10
 	syscall
