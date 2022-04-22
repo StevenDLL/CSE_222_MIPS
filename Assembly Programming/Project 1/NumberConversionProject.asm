@@ -6,10 +6,10 @@ binary:		.asciiz	"\nBinary Number: "
 hexadecimal:	.asciiz	"\nHexadecimal Number: "
 decimal:		.asciiz	"\nDecimal Number: "
 
-one:		.word	1
-two:		.word 	2
-three:		.word	3
-four:		.word	4
+one:		.asciiz	"1"
+two:		.asciiz "2"
+three:		.asciiz	"3"
+four:		.asciiz	"4"
 
 	.text
 
@@ -25,6 +25,8 @@ display_menu:
 	
 	#Read Input
 	li $v0, 8
+	#Set MAX Characters to read
+	li $a1, 30
 	syscall
 	
 	#Move input
@@ -36,16 +38,18 @@ display_menu:
 	la $t3, three
 	la $t4, four
 	
-	beq $v0, $t1, from_binary
-	beq $v0, $t2, from_hexadecimal
-	beq $v0, $t3, from_decimal
-	beq $v0, $t4, exit
+	beq $t0, $t1, from_binary
+	beq $t0, $t2, from_hexadecimal
+	beq $t0, $t3, from_decimal
+	beq $t0, $t4, exit
 	
 	la $a0, error
 	li $v0, 4
 	syscall
 	
 	j display_menu
+
+
 
 #Display give_input message
 #Take in input
@@ -61,6 +65,8 @@ from_binary:
 	
 	#Take Input
 	li $v0, 8
+	#Set MAX Characters to read
+	li $a1, 30
 	syscall
 	
 	#Move value to t0(temporary register)
@@ -68,6 +74,16 @@ from_binary:
 	
 	#Exit back to menu
 	j display_menu
+
+
+
+#Move user input from a0 to a t0
+#Check that all values in said input are either 1's or 0's
+#If it meets all criteria then jump back to from_binary and continue
+#If it DOES'T meet all criteria then jump to invalid_input method, display message and then jump back to display_menu 
+verify_binary:
+
+
 
 #Display give_input message
 #Take in input
@@ -83,6 +99,8 @@ from_hexadecimal:
 	
 	#Take Input
 	li $v0, 8
+	#Set MAX Characters to read
+	li $a1, 30
 	syscall
 	
 	#Move value to t0(temporary register)
@@ -90,6 +108,14 @@ from_hexadecimal:
 	
 	#Exit back to menu
 	j display_menu
+
+#Move user input from a0 to a t0
+#Check that all values in said input contains values from 0-9 & A-F
+#If it meets all criteria then jump back to from_hexadecimal and continue
+#If it DOES'T meet all criteria then jump to invalid_input method, display message and then jump back to display_menu 
+verify_hexadecimal:
+
+
 
 #Display give_input message
 #Take in input, 
@@ -105,6 +131,8 @@ from_decimal:
 	
 	#Take Input
 	li $v0, 8
+	#Set MAX Characters to read
+	li $a1, 30
 	syscall
 	
 	#Move value to t0(temporary register)
@@ -113,6 +141,16 @@ from_decimal:
 	#Exit back to menu
 	j display_menu
 
+
+
+#Move user input from a0 to a t0
+#Check that all values in said input are only numbers
+#If it meets all criteria then jump back to from_decimal and continue
+#If it DOES'T meet all criteria then jump to invalid_input method, display message and then jump back to display_menu 
+verify_decimal:
+
+
+#Exit the application
 exit:
 	li $v0, 10
 	syscall
