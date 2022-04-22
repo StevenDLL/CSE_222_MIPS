@@ -4,7 +4,7 @@ menu:		.asciiz	"1. Binary to Hexadecimal and Decimal \n2. Hexadecimal to Binary 
 error:		.asciiz	"\nINVALID INPUT\n"
 binary:		.asciiz	"\nBinary Number: "
 hexadecimal:	.asciiz	"\nHexadecimal Number: "
-decimal:	.asciiz	"\nDecimal Number: "
+decimal:		.asciiz	"\nDecimal Number: "
 
 one:		.word	1
 two:		.word 	2
@@ -13,7 +13,8 @@ four:		.word	4
 
 buffer:		.space	10
 binary_num:	.space 	10
-hexa
+hexadecimal_num:	.space	10
+decimal_num:	.space	10
 
 	.text
 
@@ -85,6 +86,7 @@ from_binary:
 	#Make space in stack, save ra, then do conversions here
 	addi $sp, $sp, -4
 	sw $ra, 0($sp)
+	jal to_decimal
 	
 	#Print new values here
 	addi $sp, $sp, -4
@@ -214,12 +216,68 @@ from_decimal:
 verify_decimal:
 
 
+
+to_binary:
+
+to_hexadecimal:
+
+to_decimal:	
+	la $s0, buffer
+	j to_decimal_loop
+	
+to_decimal_loop:
+
+	#Check if s1 is 0, if it is then we looped and converted every value already
+	beq $s1, $zero, binary_verify_finished
+	
+	#Set t1 to address of buffer[i]
+	add $t1, $s0, $s1
+	
+	#Set t2 to the contents of buffer[i]
+	lbu $t2, 0($t1)
+	
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	beq $t2, '0', isZero
+	beq $t2, '1' isOne
+	
+	addi $s1, $zero, -1
+	
+	j to_decimal_loop
+	
+isZero:
+	mult $zero, $s1
+	mfhi $t3
+	
+	addi $t4, $t3, 0
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+	
+isOne:
+	mult $zero, $s1
+	mfhi $t3
+	
+	addi $t4, $t3, 0
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
 display_results:
 
 	#Display Binary Message & Number
 	la $a0, binary
 	li $v0, 4
 	syscall
+	
+	la $a0, binary_num
+	li $v0, 4
+	syscall
+	
+	j display_menu
 	
 
 #Exit the application
